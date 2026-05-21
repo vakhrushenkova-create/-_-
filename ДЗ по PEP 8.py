@@ -134,20 +134,38 @@ lecturer2.courses_attached += ['Python', 'C++']
 
 # Создаем экземпляр ревьюера
 reviewer = Reviewer('Пётр', 'Петров')
+reviewer2 = Reviewer('Евгений', 'Васинов')
 reviewer.courses_attached += ['Python', 'C++']
+reviewer2.courses_attached += ['Java', 'C++', 'Python']
 
-# Выставляем оценки
+# Выставляем оценки студентам (сценари когда можем выставить оценки)
 print(reviewer.rate_hw(student, 'Python', 7))
 print(reviewer.rate_hw(student, 'Python', 8))
-reviewer.rate_hw(student2, 'Python', 7)
-reviewer.rate_hw(student2, 'Python', 9)
+print(reviewer2.rate_hw(student2, 'Java', 7))
+print(reviewer2.rate_hw(student2, 'Python', 9))
 
-student.rate_lecture(lecturer, 'Python', 10)
-student.rate_lecture(lecturer, 'Python', 3)
-student.rate_lecture(lecturer2, 'Python', 7)
-student.rate_lecture(lecturer2, 'Python', 8)
+# Выставляем оценки студентам (сценари когда не можем выставить оценки)
+print(reviewer.rate_hw(student, 'GIT', 7)) # reviewer не ведет 'GIT'
+print(reviewer.rate_hw(student, 'Java', 8)) # reviewer не ведет 'Java'
+print(reviewer2.rate_hw(student2, 'C++', 7)) # student2 не проходит C++
+print(reviewer2.rate_hw(student2, 'GO', 9)) # student2 не проходит 'GO'
+# print(lecturer.rate_hw(student2, 'GO', 9)) lecturer не может выставлять оценки студентам
 
-# Вывод информации
+# Выставляем оценки лекторам (сценари когда можем выставить оценки)
+print(student.rate_lecture(lecturer, 'Python', 10))
+print(student.rate_lecture(lecturer, 'Python', 3))
+print(student.rate_lecture(lecturer2, 'Python', 7))
+print(student.rate_lecture(lecturer2, 'Python', 8))
+
+# Выставляем оценки лекторам (сценари когда не можем выставить оценки)
+print(student.rate_lecture(lecturer, 'Java', 10)) # lecture не ведет 'Java'
+print(student.rate_lecture(lecturer, 'C++', 3)) # student не изучает 'C++'
+print(student2.rate_lecture(lecturer2, 'Введение в программирование', 7)) # (student2 закончил 'Введение в программирование'
+ # и его не ведет lecturer2)
+print(student2.rate_lecture(lecturer2, 'C++', 8)) # student2 не изучает 'C++'
+# print(reviewer.rate_lecture(lecturer2, 'C++', 8)) reviewer не может выставлять оценки лекторам
+
+# Вывод информации по студентам, лекторам, ревьюирам
 print(student)
 print(lecturer)
 print(reviewer)
