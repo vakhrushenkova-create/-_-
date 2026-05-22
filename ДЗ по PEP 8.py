@@ -1,6 +1,25 @@
+# из модуля functools мы импортируем только объект total_ordering.
+# (functools — это встроенный модуль Python. 
+#  в нём лежат разные полезные инструменты для работы с функциями и классами.)
+# (total_ordering — это специальный декоратор для классов.
+#  он помогает не писать вручную все методы сравнения, если есть только __lt__ и __eq__
 from functools import total_ordering
 
+# функция подсчета среднего 
+def calculate_avg(grades_dict):
+    total = 0
+    count = 0
 
+    for grade_list in grades_dict.values():
+        for grade in grade_list:
+            total += grade
+            count += 1
+
+    if count:
+        return total / count
+    return 0
+
+# декоратор @total_ordering Эта штука сама "дорисует" остальные знаки сравнения
 @total_ordering
 class Student:
     def __init__(self, name, surname, gender):
@@ -11,6 +30,7 @@ class Student:
         self.courses_in_progress = []
         self.grades = {}
 
+    # метод выставления оценок лекторам студентами
     def rate_lecture(self, lecturer, course, grade):
         if not (0 <= grade <= 10):
             return 'Ошибка: оценка должна быть от 0 до 10'
@@ -24,17 +44,11 @@ class Student:
         else:
             return 'Ошибка'
 
+    # вызываем метод подсчета средней оценки студента за ДЗ 
     def _get_avg_grade(self):
-        total = 0
-        count = 0
-        for grade_list in self.grades.values():
-            for grade in grade_list:
-                total += grade
-                count += 1
-        if count:
-            return total / count
-        return 0
+        return calculate_avg(self.grades)
 
+    # метод переопределения __str__ у студентов
     def __str__(self):
         return (
             f'Имя: {self.name}\n'
@@ -44,11 +58,13 @@ class Student:
             f'Завершенные курсы: {self.finished_courses}'
         )
 
+    # Магический метод сравнения (lt - меньше)
     def __lt__(self, other):
         if not isinstance(other, Student):
             return NotImplemented
         return self._get_avg_grade() < other._get_avg_grade()
 
+    # Магический метод сравнения (eq - равенство)
     def __eq__(self, other):
         if not isinstance(other, Student):
             return NotImplemented
@@ -61,6 +77,16 @@ class Mentor:
         self.surname = surname
         self.courses_attached = []
 
+    # метод выставления оценок лекторам студентами
+    def rate_lecture(self, lecturer, course, grade):
+        # Если метод вызывается у любого Ментора (в т.ч. Ревьюера), 
+        # он просто возвращает None, так как оценивать может только Студент
+        return None
+
+    def rate_hw(self, student, course, grade):
+        # Если метод вызывается у любого Ментора (в т.ч. Лектора), 
+        # он просто возвращает None, так как оценивать может только ревьюир 
+        return None
 
 @total_ordering
 class Lecturer(Mentor):
@@ -68,17 +94,11 @@ class Lecturer(Mentor):
         super().__init__(name, surname)
         self.grades = {}
 
+    # вызываем метод подсчета средней оценки лектора 
     def _get_avg_grade(self):
-        total = 0
-        count = 0
-        for grade_list in self.grades.values():
-            for grade in grade_list:
-                total += grade
-                count += 1
-        if count:
-            return total / count
-        return 0
+        return calculate_avg(self.grades)
 
+    # метод переопределения __str__ у леторов
     def __str__(self):
         return (
             f'Имя: {self.name}\n'
@@ -86,11 +106,13 @@ class Lecturer(Mentor):
             f'Средняя оценка за лекции: {self._get_avg_grade()}'
         )
 
+    # Магический метод сравнения (lt - меньше)
     def __lt__(self, other):
         if not isinstance(other, Lecturer):
             return NotImplemented
         return self._get_avg_grade() < other._get_avg_grade()
 
+    # Магический метод сравнения (eq - равенство)
     def __eq__(self, other):
         if not isinstance(other, Lecturer):
             return NotImplemented
@@ -98,6 +120,10 @@ class Lecturer(Mentor):
 
 
 class Reviewer(Mentor):
+    def __init__(self, name, surname):
+        super().__init__(name, surname)
+
+    # Метод выставления оценок студентам ревьюирами    
     def rate_hw(self, student, course, grade):
         if not (0 <= grade <= 10):
             return 'Ошибка: оценка должна быть от 0 до 10'
@@ -111,6 +137,7 @@ class Reviewer(Mentor):
         else:
             return 'Ошибка'
 
+    # метод переопределения __str__ у ревьюиров
     def __str__(self):
         return f'Имя: {self.name}\nФамилия: {self.surname}'
 
@@ -119,6 +146,7 @@ class Reviewer(Mentor):
 student = Student('Алёхина', 'Ольга', 'Ж')
 student2 = Student('Петрова', 'Марина', 'Ж')
 
+# добавляем студентам курсы в процессе прохождения и пройденные
 student.courses_in_progress += ['Python', 'Java']
 student.finished_courses += ['Введение в программирование']
 
@@ -129,12 +157,15 @@ student2.finished_courses += ['Введение в программирован�
 lecturer = Lecturer('Иван', 'Иванов')
 lecturer2 = Lecturer('Семен', 'Семенов')
 
+# Добавляем лекторам прикрепленные за ними курсы
 lecturer.courses_attached += ['Python', 'C++']
 lecturer2.courses_attached += ['Python', 'C++']
 
 # Создаем экземпляр ревьюера
 reviewer = Reviewer('Пётр', 'Петров')
 reviewer2 = Reviewer('Евгений', 'Васинов')
+
+# Добавляем приклепленные к ревьюиру курсы 
 reviewer.courses_attached += ['Python', 'C++']
 reviewer2.courses_attached += ['Java', 'C++', 'Python']
 
@@ -149,7 +180,6 @@ print(reviewer.rate_hw(student, 'GIT', 7)) # reviewer не ведет 'GIT'
 print(reviewer.rate_hw(student, 'Java', 8)) # reviewer не ведет 'Java'
 print(reviewer2.rate_hw(student2, 'C++', 7)) # student2 не проходит C++
 print(reviewer2.rate_hw(student2, 'GO', 9)) # student2 не проходит 'GO'
-# print(lecturer.rate_hw(student2, 'GO', 9)) lecturer не может выставлять оценки студентам
 
 # Выставляем оценки лекторам (сценари когда можем выставить оценки)
 print(student.rate_lecture(lecturer, 'Python', 10))
@@ -160,10 +190,23 @@ print(student.rate_lecture(lecturer2, 'Python', 8))
 # Выставляем оценки лекторам (сценари когда не можем выставить оценки)
 print(student.rate_lecture(lecturer, 'Java', 10)) # lecture не ведет 'Java'
 print(student.rate_lecture(lecturer, 'C++', 3)) # student не изучает 'C++'
-print(student2.rate_lecture(lecturer2, 'Введение в программирование', 7)) # (student2 закончил 'Введение в программирование'
- # и его не ведет lecturer2)
+print(student2.rate_lecture(lecturer2, 'Введение в программирование', 7)) # (student2 закончил
+#'Введение в программирование'и его не ведет lecturer2)
 print(student2.rate_lecture(lecturer2, 'C++', 8)) # student2 не изучает 'C++'
-# print(reviewer.rate_lecture(lecturer2, 'C++', 8)) reviewer не может выставлять оценки лекторам
+
+# Сценарий когда ревьюир пытается оценить лектора 
+result = reviewer.rate_lecture(lecturer2, 'C++', 8)
+if result is None:
+    print('Лектора оценивать может только студент')
+else:
+    print(result)
+
+# Сценарий когда лектор пытается оценить студента 
+result = lecturer2.rate_hw(student, 'C++', 8)
+if result is None:
+    print('Студента может оценивать только ревьюир')
+else:
+    print(result)
 
 # Вывод информации по студентам, лекторам, ревьюирам
 print(student)
